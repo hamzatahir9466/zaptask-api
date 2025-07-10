@@ -20,12 +20,19 @@ Inspired by Zapier-style workflows and built to demonstrate modern backend archi
 ## 📁 Project Structure
 
 zaptask-api/
+
 ├── src/
+
 │ ├── index.js # Main Fastify server
+
 │ ├── routes/ # Route handlers (planned)
+
 │ └── plugins/ # Redis plugin (planned)
+
 ├── .env # Config (Redis, etc.)
+
 ├── package.json
+
 └── README.md
 
 
