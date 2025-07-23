@@ -1,13 +1,17 @@
 import fastify from "fastify";
 import rootRoute from './routes/root.js'
+import taskRoutes from "./routes/tasks.js";
+import redisPlugin from './plugin/redis.js';
 
 
 const app = fastify({
   logger: true
 });
 
-//await fastify.register(redisPlugin)
+await app.register(redisPlugin)
 await app.register(rootRoute)
+await app.register(taskRoutes);
+
 
 const start = async () => {
   try {
