@@ -1,13 +1,13 @@
 import fastify from "fastify";
+import rootRoute from './routes/root.js'
 
 
 const app = fastify({
   logger: true
 });
 
-app.get("/", async (request, reply) => {
-  return { message: "ZapTask API is running" };
-});
+//await fastify.register(redisPlugin)
+await app.register(rootRoute)
 
 const start = async () => {
   try {
