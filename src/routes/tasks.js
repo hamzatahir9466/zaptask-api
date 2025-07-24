@@ -11,7 +11,7 @@ async function taskRoutes(fastify,options){
         try {
             // Store the task in Redis
             const taskKey = `task:${taskId}`;
-            await fastify.redis.set(taskKey, JSON.stringify({ payload, status: 'pending' }));
+            await fastify.redis.set(taskKey, JSON.stringify({ taskKey,payload, status: 'pending' }));
             await fastify.redis.sadd('tasks', taskKey); // Add task key to a set for easy retrieval
             return reply.status(201).send({ taskId, status: 'scheduled' });
         }
@@ -41,6 +41,32 @@ async function taskRoutes(fastify,options){
             fastify.log.error(error);
             return reply.status(500).send({ error: 'Failed to retrieve task' });
         }
+    });
+
+
+    fastify.get('/tasks', async(request, reply)=>{
+
+        try{
+
+           const taskId= await fastify.redis.smembers('tasks');
+
+           if(!taskId||taskId.length===0){
+            return reply.status(404).send({ error: 'No tasks found' });
+           }
+              const tasks = await Promise.all(taskId.map(async (id) => {
+                const taskData = await fastify.redis.get(id);
+                return JSON.parse(taskData);
+              }));
+
+              return reply.status(200).send(tasks);
+
+
+        }
+        catch (error) {
+            fastify.log.error(error);
+            return reply.status(500).send({ error: 'Failed to retrieve tasks' });
+        }
+        // Retrieve all tasks from Redis
     });
 }
 
