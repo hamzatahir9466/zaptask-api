@@ -12,6 +12,7 @@ async function taskRoutes(fastify,options){
             // Store the task in Redis
             const taskKey = `task:${taskId}`;
             await fastify.redis.set(taskKey, JSON.stringify({ payload, status: 'pending' }));
+            await fastify.redis.sadd('tasks', taskKey); // Add task key to a set for easy retrieval
             return reply.status(201).send({ taskId, status: 'scheduled' });
         }
         catch (error) {
