@@ -12,6 +12,8 @@ await app.register(redisPlugin)
 await app.register(rootRoute)
 await app.register(taskRoutes);
 
+// This is the main entry point of the application.
+// It initializes the Fastify server, registers plugins, and starts listening for requests.
 
 const start = async () => {
   try {
