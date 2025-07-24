@@ -14,7 +14,7 @@ async function processTask() {
     for (const key of keys) {
         const taskData = await redisClient.get(key);
         const task = JSON.parse(taskData);
-        if (task.status === 'pending') {
+        if (task&&task.status === 'pending') {
             console.log(`Processing task key : ${key} with payload:${task.payload} and status: ${task.status}`);
 
             redisClient.set(key, JSON.stringify({ ...task, status: 'processing' }),'EX',100);
@@ -23,7 +23,9 @@ async function processTask() {
             // After processing, you might want to update the task status in Redis
             await redisClient.set(key, JSON.stringify({ ...task, status: 'completed' }),'EX',100);
 
-            await redisClient.srem('tasks', key); // Remove the task from the set after processing
+            await redisClient.sadd('tasks',key,'EX',100); // Re-add the task to the set with an expiration time
+
+         //   await redisClient.srem('tasks', key); // Remove the task from the set after processing
         }
     }
 }

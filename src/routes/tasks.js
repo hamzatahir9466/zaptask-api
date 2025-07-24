@@ -49,7 +49,7 @@ async function taskRoutes(fastify, options) {
         try {
 
             const taskId = await fastify.redis.smembers('tasks');
-           const{status}= request.query;
+            const { status } = request.query;
 
             if (!taskId || taskId.length === 0) {
                 return reply.status(404).send({ error: 'No tasks found' });
@@ -60,16 +60,19 @@ async function taskRoutes(fastify, options) {
                     await fastify.redis.srem('tasks', id); // Remove stale task key
                     return null; // Skip this task if it doesn't exist
                 }
-                return JSON.parse(taskData);
 
-                if(status &&taskData.status!==status){
-                    return null; // Skip this task if it doesn't match the status
+                const parsed = JSON.parse(taskData);
+
+                // ✅ Now you can safely access `parsed.status`
+                if (status && parsed.status !== status) {
+                    return null;
                 }
-                return JSON.parse(taskData);
+
+                return parsed;
             }));
 
             const filteredTasks = tasks.filter(task => task !== null);
-            return reply.status(200).send({'tasks':filteredTasks, 'count': filteredTasks.length, status:'success'});
+            return reply.status(200).send({ 'tasks': filteredTasks, 'count': filteredTasks.length, status: 'success' });
 
 
         }
