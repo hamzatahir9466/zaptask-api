@@ -1,8 +1,8 @@
 
 
 
-async function taskRoutes(fastify,options){
-    fastify.post('/tasks',async(request,reply)=>{
+async function taskRoutes(fastify, options) {
+    fastify.post('/tasks', async (request, reply) => {
 
         const { taskId, payload } = request.body;
         if (!taskId || !payload) {
@@ -11,7 +11,7 @@ async function taskRoutes(fastify,options){
         try {
             // Store the task in Redis
             const taskKey = `task:${taskId}`;
-            await fastify.redis.set(taskKey, JSON.stringify({ taskKey,payload, status: 'pending' }));
+            await fastify.redis.set(taskKey, JSON.stringify({ taskKey, payload, status: 'pending' }));
             await fastify.redis.sadd('tasks', taskKey); // Add task key to a set for easy retrieval
             return reply.status(201).send({ taskId, status: 'scheduled' });
         }
@@ -21,9 +21,9 @@ async function taskRoutes(fastify,options){
         }
     })
 
-// Endpoint to retrieve a task by its ID
+    // Endpoint to retrieve a task by its ID
     // This endpoint allows users to fetch the details of a specific task using its taskId.
-    fastify.get('/tasks/:taskId', async(request, reply) => {
+    fastify.get('/tasks/:taskId', async (request, reply) => {
         const { taskId } = request.params;
         if (!taskId) {
             return reply.status(400).send({ error: 'taskId is required' });
@@ -44,21 +44,32 @@ async function taskRoutes(fastify,options){
     });
 
 
-    fastify.get('/tasks', async(request, reply)=>{
+    fastify.get('/tasks', async (request, reply) => {
 
-        try{
+        try {
 
-           const taskId= await fastify.redis.smembers('tasks');
+            const taskId = await fastify.redis.smembers('tasks');
+           const{status}= request.query;
 
-           if(!taskId||taskId.length===0){
-            return reply.status(404).send({ error: 'No tasks found' });
-           }
-              const tasks = await Promise.all(taskId.map(async (id) => {
+            if (!taskId || taskId.length === 0) {
+                return reply.status(404).send({ error: 'No tasks found' });
+            }
+            const tasks = await Promise.all(taskId.map(async (id) => {
                 const taskData = await fastify.redis.get(id);
+                if (!taskData) {
+                    await fastify.redis.srem('tasks', id); // Remove stale task key
+                    return null; // Skip this task if it doesn't exist
+                }
                 return JSON.parse(taskData);
-              }));
 
-              return reply.status(200).send(tasks);
+                if(status &&taskData.status!==status){
+                    return null; // Skip this task if it doesn't match the status
+                }
+                return JSON.parse(taskData);
+            }));
+
+            const filteredTasks = tasks.filter(task => task !== null);
+            return reply.status(200).send({'tasks':filteredTasks, 'count': filteredTasks.length, status:'success'});
 
 
         }
