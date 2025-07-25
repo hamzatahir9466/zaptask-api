@@ -82,6 +82,30 @@ async function taskRoutes(fastify, options) {
         }
         // Retrieve all tasks from Redis
     });
+
+
+    fastify.delete('/tasks/:taskid', async(request,reply)=>{
+
+        const { taskid } = request.params;
+        if (!taskid) {
+            return reply.status(400).send({ error: 'taskId is required' });
+        }
+        try{
+
+            const taskKey=`task:${taskid}`;
+            const taskData = await fastify.redis.get(taskKey);
+            if (!taskData) {
+                return reply.status(404).send({ error: 'Task not found' });
+            }
+            await fastify.redis.del(taskKey); // Delete the task from Redis
+            await fastify.redis.srem('tasks', taskKey); // Remove the task key from the set
+            return reply.status(200).send({ message: 'Task deleted successfully' });
+        }catch (error) {
+            fastify.log.error(error);
+            return reply.status(500).send({ error: 'Failed to delete task' });
+        }
+
+    });
 }
 
 export default taskRoutes;
