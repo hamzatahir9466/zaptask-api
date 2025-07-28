@@ -4,13 +4,17 @@ ZapTask is a lightweight task queue API built with Fastify and Redis. It lets yo
 
 This project explores async job processing, Redis caching, and modern backend patterns using Node.js with ESM.
 
-## Tech Stack
 
-- Node.js (ES Modules)
-- Fastify
-- Redis
-- ioredis
-- dotenv
+ ## Tech Stack
+
+| Component            | Technologies                                 |
+|----------------------|----------------------------------------------|
+| Task API             | Node.js (ESM), Fastify, Redis, ioredis       |
+| Background Worker    | Node.js, Redis                               |
+| Logging              | Pino (structured logging)                    |
+| AI Suggestion Service| Python, FastAPI, OpenAI API (GPT-4), Pydantic|
+| Config Management    | dotenv                                        |
+
 
 ## Features
 
