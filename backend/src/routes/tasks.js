@@ -27,21 +27,23 @@ async function taskRoutes(fastify, options) {
                 const data = await aiRes.json();
                 suggested_task = data.suggested_task;
                 category = data.category;
+            } else {
+                log.warn(`AI service returned status ${aiResponse.status}`);
             }
 
 
             const taskKey = `task:${taskId}`;
 
             const taskData = {
-                taskId:taskKey,
+                taskId: taskKey,
                 payload,
                 suggested_task,
                 category,
                 status: 'pending',
                 createdAt: new Date().toISOString()
-            };  
+            };
 
-           // await fastify.redis.hmset(taskKey, taskData); // Store task data as a hash in Redis 
+            // await fastify.redis.hmset(taskKey, taskData); // Store task data as a hash in Redis 
 
             await fastify.redis.set(taskKey, JSON.stringify(taskData));
             await fastify.redis.sadd('tasks', taskKey); // Add task key to a set for easy retrieval
