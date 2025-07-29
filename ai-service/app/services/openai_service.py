@@ -5,6 +5,11 @@ import os
 import json
 import re
 
+import logging
+
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 
 load_dotenv()
 openai = AsyncOpenAI(
@@ -33,6 +38,7 @@ async def get_task_suggestion(task_request) -> dict:
         str: The suggested task.
     """
     user_input=task_request.input.strip()
+    logger.info("Calling OpenAI with input: %s", user_input)
     system_prompt = load_prompt_template()
     system_prompt = system_prompt.replace("{{user_input}}", user_input)
     print(f"System Prompt: {system_prompt}")
@@ -56,11 +62,11 @@ async def get_task_suggestion(task_request) -> dict:
       
     content = response.choices[0].message.content.strip()
     cleaned = clean_json_text(content)
-    print(f"Response Content: {cleaned}")
+    logger.info("AI response: %s", content)
     try:
         return json.loads(cleaned)
     except json.JSONDecodeError as e:
-        print(f"JSON Decode Error: {e}")
+        logger.error("JSON DECODE ERROR: %s", str(e), exc_info=True)
         return {
             "suggested_task": "Unknown",
             "category": "Uncategorized"
