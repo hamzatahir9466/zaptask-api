@@ -21,6 +21,10 @@ async def suggest_task(task_request: TaskRequest) -> TaskResponse:
     """
     try:
         suggestion = await get_task_suggestion(task_request)
-        return TaskResponse(suggested_task=suggestion)
+        return TaskResponse(
+            suggested_task=suggestion["suggested_task"],
+            category=suggestion["category"]
+        )
     except Exception as e:
+        print(f"Error fetching task suggestion: {e}")
         raise HTTPException(status_code=500, detail=str(e))

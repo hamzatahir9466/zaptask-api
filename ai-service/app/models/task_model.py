@@ -6,3 +6,4 @@ class TaskRequest(BaseModel):
 
 class TaskResponse(BaseModel):
     suggested_task: str
+    category: str

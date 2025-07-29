@@ -2,6 +2,8 @@
 from openai import AsyncOpenAI
 from dotenv import load_dotenv
 import os
+import json
+import re
 
 
 load_dotenv()
@@ -13,7 +15,14 @@ openai = AsyncOpenAI(
 
 
 
-async def get_task_suggestion(task_request) -> str:
+# Clean GPT response before parsing
+def clean_json_text(text: str) -> str:
+    # Remove code block formatting like ```json ... ```
+    text = re.sub(r"^```json|```$", "", text.strip(), flags=re.IGNORECASE)
+    return text.strip()
+
+
+async def get_task_suggestion(task_request) -> dict:
     """
     Fetch a task suggestion from OpenAI based on the provided task request.
 
@@ -25,8 +34,9 @@ async def get_task_suggestion(task_request) -> str:
     """
     user_input=task_request.input.strip()
     system_prompt = load_prompt_template()
-    prompt = f"Suggest a concise, professional task name based on this description:\n\n'{user_input}'\n\nTask Name:"
-
+    system_prompt = system_prompt.replace("{{user_input}}", user_input)
+    print(f"System Prompt: {system_prompt}")
+   
     response = await openai.chat.completions.create(
         
         model="gpt-4o",  
@@ -34,7 +44,7 @@ async def get_task_suggestion(task_request) -> str:
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_input}
             ],
-        max_tokens=20,
+        max_tokens=80,
         temperature=0.7
     )
     
@@ -44,8 +54,17 @@ async def get_task_suggestion(task_request) -> str:
     #if not response.choices[0].message or not response.choices[0].message.content:
     #    raise ValueError("No content in the response from OpenAI API.")
       
-    
-    return response.choices[0].message.content.strip()
+    content = response.choices[0].message.content.strip()
+    cleaned = clean_json_text(content)
+    print(f"Response Content: {cleaned}")
+    try:
+        return json.loads(cleaned)
+    except json.JSONDecodeError as e:
+        print(f"JSON Decode Error: {e}")
+        return {
+            "suggested_task": "Unknown",
+            "category": "Uncategorized"
+        }
 
 
 def load_prompt_template() -> str:
