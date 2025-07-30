@@ -11,7 +11,7 @@ This project explores async job processing, Redis caching, and modern backend pa
 |----------------------|----------------------------------------------|
 | Task API             | Node.js (ESM), Fastify, Redis, ioredis       |
 | Background Worker    | Node.js, Redis                               |
-| Logging              | Pino (structured logging)                    |
+| Logging              | Fastify built-in structured logging (Pino)   |
 | AI Suggestion Service| Python, FastAPI, OpenAI API (GPT-4), Pydantic|
 | Config Management    | dotenv                                        |
 
@@ -25,22 +25,24 @@ This project explores async job processing, Redis caching, and modern backend pa
 - Delete tasks using DELETE /tasks/:id  
 - Auto-expire tasks using Redis TTL  
 - Tracks task IDs using a Redis Set for efficient querying
-- **Observability:** Add metrics, tracing, and logging enhancements (e.g., Prometheus or Grafana).
-- **Smart Task Suggestions (LLM Integration):** Integrating GPT-4 via OpenAI API to suggest task titles and categorize submissions intelligently.
+- **Observability:** Metrics via Prometheus, trace ID propagation, and structured logging with Fastify.
+- **Smart Task Suggestions (LLM Integration):** Integrated GPT-4 via OpenAI API using a Python microservice to generate intelligent task titles and categories.
 - **Inter-Service Communication:** API-layer bridge between Node.js service and the AI microservice built with FastAPI.
-- **Trace IDs:** Add request/trace ID support for debugging across services.
+- **Trace IDs:** Auto-generated request trace IDs injected via Fastify hooks and propagated to logs.
+  
 
   ---
 
 ## In Progress
--  **Test Coverage:** Unit and integration tests using Jest.
+-  Increase test coverage using Jest for task API and worker logic
 
 ---
 
 ## Planned Features
+- Add API key/token-based authentication
+- Enable user-defined task tags or labels
+- Add task retry mechanism or failure tracking
 
--  **Authentication:** Add API key or token-based auth.
--  **Task Tagging:** Allow users to tag or categorize tasks.
 
 
 ---
@@ -70,7 +72,7 @@ Run the background worker
 node worker.js
 ```
 
-The worker checks for new tasks every few seconds and updates their status.
+The background worker polls Redis for new tasks and updates their status to completed after processing.
 
 ## API Overview
 
@@ -126,7 +128,7 @@ All task IDs are tracked in a Redis set called tasks. This allows the system to 
 The system demonstrates basic ideas behind background processing, caching, TTL-based cleanup, and RESTful API design.
 
 ## Notes
-This project was built as a portfolio piece to explore Fastify, Redis, and event-driven backend patterns. It’s a great starting point for building more advanced task systems with queues or observability.
+This project was designed as a portfolio piece to explore Fastify, Redis, and event-driven backend patterns. It’s a great starting point for building more advanced task systems with queues or observability.
 
 
 
