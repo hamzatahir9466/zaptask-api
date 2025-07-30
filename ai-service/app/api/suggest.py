@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from app.models.task_model import TaskRequest, TaskResponse
 from app.services.openai_service import get_task_suggestion
 import logging
@@ -11,7 +11,7 @@ router=APIRouter()
 
 
 @router.post("/", response_model=TaskResponse)
-async def suggest_task(task_request: TaskRequest) -> TaskResponse:
+async def suggest_task(task_request: TaskRequest, request: Request) -> TaskResponse:
     """
     Suggest a task based on the provided request.
     
@@ -25,9 +25,10 @@ async def suggest_task(task_request: TaskRequest) -> TaskResponse:
         HTTPException: If an error occurs while fetching the suggestion.
     """
     try:
-        logger.info("Calling OpenAI with input: %s", task_request.input)
+        trace_id = request.state.trace_id
+        logger.info("Trace %s: Received input: %s", trace_id, task_request.input)
         suggestion = await get_task_suggestion(task_request)
-        logger.info("Received suggestion: %s", suggestion)
+        logger.info("Trace %s: AI response: %s", trace_id, suggestion)
         return TaskResponse(
             suggested_task=suggestion["suggested_task"],
             category=suggestion["category"]

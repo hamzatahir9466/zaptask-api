@@ -5,8 +5,10 @@ import fetch from 'node-fetch';
 async function taskRoutes(fastify, options) {
     fastify.post('/tasks', async (request, reply) => {
 
+
         let suggested_task = "Untitled Task";
         let category = "Uncategorized";
+        request.log.info({ traceId: request.traceId, payload: request.body }, 'New task received');
 
 
         const { taskId, payload } = request.body;
@@ -59,7 +61,10 @@ async function taskRoutes(fastify, options) {
     // This endpoint allows users to fetch the details of a specific task using its taskId.
     fastify.get('/tasks/:taskId', async (request, reply) => {
         const { taskId } = request.params;
+
+        request.log.info({ traceId: request.traceId, taskId: taskId }, 'Fetching task');
         if (!taskId) {
+            request.log.warn({ traceId: request.traceId, taskId: taskId }, 'Task not found');
             return reply.status(400).send({ error: 'taskId is required' });
         }
         try {
@@ -84,6 +89,7 @@ async function taskRoutes(fastify, options) {
 
             const taskId = await fastify.redis.smembers('tasks');
             const { status } = request.query;
+            request.log.info({ traceId: request.traceId, status }, 'Listing tasks');
 
             if (!taskId || taskId.length === 0) {
                 return reply.status(404).send({ error: 'No tasks found' });
