@@ -25,23 +25,24 @@ This project explores async job processing, Redis caching, and modern backend pa
 - Delete tasks using DELETE /tasks/:id  
 - Auto-expire tasks using Redis TTL  
 - Tracks task IDs using a Redis Set for efficient querying
+- **Observability:** Add metrics, tracing, and logging enhancements (e.g., Prometheus or Grafana).
+- **Smart Task Suggestions (LLM Integration):** Integrating GPT-4 via OpenAI API to suggest task titles and categorize submissions intelligently.
+- **Inter-Service Communication:** API-layer bridge between Node.js service and the AI microservice built with FastAPI.
 
   ---
 
 ## In Progress
 
--  **Smart Task Suggestions (LLM Integration):** Integrating GPT-4 via OpenAI API to suggest task titles and categorize submissions intelligently.
-- **Inter-Service Communication:** API-layer bridge between Node.js service and the AI microservice built with FastAPI.
+- **Trace IDs:** Add request/trace ID support for debugging across services.
 
 ---
 
 ## Planned Features
 
--  **Observability:** Add metrics, tracing, and logging enhancements (e.g., Prometheus or Grafana).
 -  **Authentication:** Add API key or token-based auth.
 -  **Test Coverage:** Unit and integration tests using Jest.
 -  **Task Tagging:** Allow users to tag or categorize tasks.
--  **Trace IDs:** Add request/trace ID support for debugging across services.
+
 
 ---
 
