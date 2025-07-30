@@ -28,19 +28,18 @@ This project explores async job processing, Redis caching, and modern backend pa
 - **Observability:** Add metrics, tracing, and logging enhancements (e.g., Prometheus or Grafana).
 - **Smart Task Suggestions (LLM Integration):** Integrating GPT-4 via OpenAI API to suggest task titles and categorize submissions intelligently.
 - **Inter-Service Communication:** API-layer bridge between Node.js service and the AI microservice built with FastAPI.
+- **Trace IDs:** Add request/trace ID support for debugging across services.
 
   ---
 
 ## In Progress
-
-- **Trace IDs:** Add request/trace ID support for debugging across services.
+-  **Test Coverage:** Unit and integration tests using Jest.
 
 ---
 
 ## Planned Features
 
 -  **Authentication:** Add API key or token-based auth.
--  **Test Coverage:** Unit and integration tests using Jest.
 -  **Task Tagging:** Allow users to tag or categorize tasks.
 
 
