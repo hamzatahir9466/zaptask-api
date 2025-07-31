@@ -1,134 +1,117 @@
-# ZapTask API
+# ZapTask Project 
 
-ZapTask is a lightweight task queue API built with Fastify and Redis. It lets you submit tasks through a POST endpoint and processes them in the background using a worker script. You can fetch task status, filter by status, or delete tasks. Tasks automatically expire after a set time using Redis TTL.
+ZapTask is a lightweight, modular task queue system with AI-enhanced task suggestion capabilities. Built as a two-service architecture, it features a **Node.js + Fastify backend** for task management and a **Python + FastAPI microservice** for LLM-powered task title generation and categorization via GPT-4.
 
-This project explores async job processing, Redis caching, and modern backend patterns using Node.js with ESM.
-
-
- ## Tech Stack
-
-| Component            | Technologies                                 |
-|----------------------|----------------------------------------------|
-| Task API             | Node.js (ESM), Fastify, Redis, ioredis       |
-| Background Worker    | Node.js, Redis                               |
-| Logging              | Fastify built-in structured logging (Pino)   |
-| AI Suggestion Service| Python, FastAPI, OpenAI API (GPT-4), Pydantic|
-| Config Management    | dotenv                                        |
-
-
-## Features
-
-- Submit new tasks using POST /tasks  
-- Background worker processes tasks asynchronously  
-- Check status of a specific task using GET /tasks/:id  
-- List all tasks or filter them by status using GET /tasks  
-- Delete tasks using DELETE /tasks/:id  
-- Auto-expire tasks using Redis TTL  
-- Tracks task IDs using a Redis Set for efficient querying
-- **Observability:** Metrics via Prometheus, trace ID propagation, and structured logging with Fastify.
-- **Smart Task Suggestions (LLM Integration):** Integrated GPT-4 via OpenAI API using a Python microservice to generate intelligent task titles and categories.
-- **Inter-Service Communication:** API-layer bridge between Node.js service and the AI microservice built with FastAPI.
-- **Trace IDs:** Auto-generated request trace IDs injected via Fastify hooks and propagated to logs.
-  
-
-  ---
-
-## In Progress
--  Increase test coverage using Jest for task API and worker logic
+This project demonstrates modern backend design principles including:
+- Asynchronous processing
+- Microservice communication
+- Observability (logging, metrics, tracing)
+- AI integration (OpenAI GPT-4)
 
 ---
 
-## Planned Features
-- Add API key/token-based authentication
-- Enable user-defined task tags or labels
-- Add task retry mechanism or failure tracking
+##  Project Structure
 
-
+```
+zaptask-project/
+├── node-service/        # Fastify API + Redis + Background Worker
+│   ├── routes/
+│   ├── worker/
+│   └── ...
+├── ai-service/          # FastAPI microservice (Python)
+│   ├── app/
+│   ├── .env
+│   └── ...
+├── README.md            # Root-level overview (this file)
+└── ...
+```
 
 ---
 
-## Getting Started
+##  Tech Overview
 
-Clone the repository and install dependencies
+| Feature                 | Tech Stack                                      |
+|-------------------------|--------------------------------------------------|
+| Task API                | Node.js (ESM), Fastify, Redis, ioredis          |
+| Background Processing   | Node.js worker + Redis TTL                      |
+| AI Suggestion Engine    | Python, FastAPI, OpenAI GPT-4, Pydantic         |
+| Observability           | Prometheus, Fastify built-in structured logging |
+| Traceability            | Trace ID propagation across services            |
+| Config Management       | dotenv, .env files                              |
+
+---
+
+##  Service Interaction
+
+```mermaid
+graph TD;
+  Client -->|Submit task| FastifyAPI
+  FastifyAPI -->|Store + queue| Redis
+  FastifyAPI -->|Forward to| AISuggestionService
+  AISuggestionService -->|GPT-4| OpenAI
+  AISuggestionService -->|Respond| FastifyAPI
+  FastifyAPI -->|Return AI-enhanced task| Client
+  Worker -->|Poll Redis| Redis
+  Worker -->|Mark tasks as done| Redis
+```
+
+---
+
+##  Getting Started (Mono Repo)
+
+### 1. Clone the repository
 
 ```bash
+git clone https://github.com/hamzatahir9466/zaptask-api.git
+cd zaptask-api
+```
+
+### 2. Setup Node.js service
+
+```bash
+cd node-service
+cp .env.example .env
 npm install
-
+npm run dev:api
 ```
-Set up your environment by creating a .env file based on .env.example
 
-REDIS_URL=redis://localhost:6379
+Start the worker in a new terminal:
+```bash
 
-Run the API server
+npm run dev:worker
+```
+
+### 3. Setup Python AI service
 
 ```bash
-npm run dev
+cd ../ai-service
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+cp .env.example .env
+uvicorn app.main:app --reload
 ```
 
-Server starts at http://localhost:3000
+---
 
-Run the background worker
-```bash
-node worker.js
-```
+##  Observability
 
-The background worker polls Redis for new tasks and updates their status to completed after processing.
+- **Logging**: Fastify built-in structured logging (Pino-compatible)
+- **Metrics**: Prometheus endpoint available at `/metrics`
+- **Trace ID**: Injected via Fastify hooks and propagated to Python service
 
-## API Overview
+---
 
-# POST /tasks
+##  Roadmap
 
-Submit a new task
+- [ ] API authentication for external clients
+- [ ] Rate limiting and retries
+- [ ] Vector-based task deduplication (future LLM upgrade)
+- [ ] CI/CD for multi-service deployment
 
-```bash
-curl -X POST http://localhost:3000/tasks \
-  -H "Content-Type: application/json" \
-  -d '{"taskId": "abc", "payload": "Test"}'
-```
-Returns
+---
 
-```
-{
-  "taskId": "task:abc123",
-  "status": "pending"
-}
+## License
 
-```
-
-## GET /tasks/:id
-
-Fetch a specific task’s status
-
-```
-curl http://localhost:3000/tasks/task:abc123
-```
-
-## GET /tasks?status=processing
-
-Returns all tasks, optionally filtered by status
-
-```
-curl http://localhost:3000/tasks?status=completed
-```
-
-## DELETE /tasks/:id
-
-Removes a task from Redis and the internal set
-
-```
-curl -X DELETE http://localhost:3000/tasks/task:abc123
-
-```
-
-## How it Works
-When you POST a task, it is saved in Redis with a pending status and an expiration timer. A background worker picks it up, simulates processing, and updates the status to completed.
-
-All task IDs are tracked in a Redis set called tasks. This allows the system to scan for keys without relying on expensive pattern matching. Tasks that expire naturally are removed from the set during GET requests if their keys no longer exist.
-
-The system demonstrates basic ideas behind background processing, caching, TTL-based cleanup, and RESTful API design.
-
-## Notes
-This project was designed as a portfolio piece to explore Fastify, Redis, and event-driven backend patterns. It’s a great starting point for building more advanced task systems with queues or observability.
-
-
-
+This is a personal portfolio project for educational and demonstration purposes.
+All AI usage must comply with [OpenAI's terms](https://openai.com/policies/usage-policies).
