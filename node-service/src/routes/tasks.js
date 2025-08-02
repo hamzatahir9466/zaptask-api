@@ -1,6 +1,10 @@
 
-import fetch from 'node-fetch';
+//import fetch from 'node-fetch';
+import { fetch } from 'undici';
 
+
+
+global.fetch = fetch;
 
 async function taskRoutes(fastify, options) {
     fastify.post('/tasks', async (request, reply) => {
@@ -9,6 +13,7 @@ async function taskRoutes(fastify, options) {
         let suggested_task = "Untitled Task";
         let category = "Uncategorized";
         request.log.info({ traceId: request.traceId, payload: request.body }, 'New task received');
+        // log.info({ traceId: request.traceId, payload: request.body }, 'New task received');
 
 
         const { taskId, payload } = request.body;
@@ -18,7 +23,7 @@ async function taskRoutes(fastify, options) {
         try {
             // Store the task in Redis
 
-            const aiRes = await fetch("http://localhost:8001/suggest",
+            const aiRes = await global.fetch("http://localhost:8001/suggest",
                 {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -48,7 +53,7 @@ async function taskRoutes(fastify, options) {
             // await fastify.redis.hmset(taskKey, taskData); // Store task data as a hash in Redis 
 
             await fastify.redis.set(taskKey, JSON.stringify(taskData));
-            await fastify.redis.sadd('tasks', taskKey); // Add task key to a set for easy retrieval
+            await fastify.redis.sadd('tasks', taskKey);
             return reply.status(201).send({ taskId, status: 'scheduled' });
         }
         catch (error) {
@@ -57,8 +62,6 @@ async function taskRoutes(fastify, options) {
         }
     })
 
-    // Endpoint to retrieve a task by its ID
-    // This endpoint allows users to fetch the details of a specific task using its taskId.
     fastify.get('/tasks/:taskId', async (request, reply) => {
         const { taskId } = request.params;
 
@@ -68,7 +71,6 @@ async function taskRoutes(fastify, options) {
             return reply.status(400).send({ error: 'taskId is required' });
         }
         try {
-            // Retrieve the task from Redis
             const taskKey = `task:${taskId}`;
             const taskData = await fastify.redis.get(taskKey);
             if (!taskData) {
@@ -97,13 +99,12 @@ async function taskRoutes(fastify, options) {
             const tasks = await Promise.all(taskId.map(async (id) => {
                 const taskData = await fastify.redis.get(id);
                 if (!taskData) {
-                    await fastify.redis.srem('tasks', id); // Remove stale task key
-                    return null; // Skip this task if it doesn't exist
+                    await fastify.redis.srem('tasks', id);
+                    return null;
                 }
 
                 const parsed = JSON.parse(taskData);
 
-                // Now you can safely access `parsed.status`
                 if (status && parsed.status !== status) {
                     return null;
                 }
@@ -120,7 +121,7 @@ async function taskRoutes(fastify, options) {
             fastify.log.error(error);
             return reply.status(500).send({ error: 'Failed to retrieve tasks' });
         }
-        // Retrieve all tasks from Redis
+
     });
 
 
@@ -137,8 +138,8 @@ async function taskRoutes(fastify, options) {
             if (!taskData) {
                 return reply.status(404).send({ error: 'Task not found' });
             }
-            await fastify.redis.del(taskKey); // Delete the task from Redis
-            await fastify.redis.srem('tasks', taskKey); // Remove the task key from the set
+            await fastify.redis.del(taskKey);
+            await fastify.redis.srem('tasks', taskKey);
             return reply.status(200).send({ message: 'Task deleted successfully' });
         } catch (error) {
             fastify.log.error(error);

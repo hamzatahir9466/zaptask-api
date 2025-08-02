@@ -1,4 +1,4 @@
-// File: src/plugin/redis.js
+
 import fp from 'fastify-plugin'
 import Redis from 'ioredis'
 import dotenv from 'dotenv'
@@ -17,5 +17,3 @@ async function redisPlugin(fastify, options) {
 }
 
 export default fp(redisPlugin)
-// This plugin initializes a Redis client and decorates the Fastify instance with it.
-// It also ensures that the Redis connection is closed when the Fastify instance is closed.
